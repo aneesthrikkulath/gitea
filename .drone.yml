@@ -229,6 +229,7 @@ services:
     image: postgres:9.5
     environment:
       POSTGRES_DB: test
+      POSTGRES_PASSWORD: postgres
 
   - name: ldap
     pull: default
@@ -347,7 +348,7 @@ steps:
 
 ---
 kind: pipeline
-name: release-master
+name: release-latest
 
 platform:
   os: linux
@@ -378,7 +379,7 @@ steps:
 
   - name: static
     pull: always
-    image: techknowlogick/xgo:latest
+    image: techknowlogick/xgo:go-1.13.x
     commands:
       - apt update && apt -y install curl
       - curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt -y install nodejs
@@ -403,7 +404,7 @@ steps:
       GPGSIGN_PASSPHRASE:
         from_secret: gpgsign_passphrase
 
-  - name: release-branch-release
+  - name: release-branch
     pull: always
     image: plugins/s3:1
     settings:
@@ -425,7 +426,7 @@ steps:
       event:
         - push
 
-  - name: release
+  - name: release-master
     pull: always
     image: plugins/s3:1
     settings:
@@ -476,7 +477,7 @@ steps:
 
   - name: static
     pull: always
-    image: techknowlogick/xgo:latest
+    image: techknowlogick/xgo:go-1.13.x
     commands:
       - apt update && apt -y install curl
       - curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt -y install nodejs
@@ -501,7 +502,7 @@ steps:
       GPGSIGN_PASSPHRASE:
         from_secret: gpgsign_passphrase
 
-  - name: release
+  - name: release-tag
     pull: always
     image: plugins/s3:1
     settings:
@@ -741,7 +742,7 @@ depends_on:
   - testing-arm64
   - translations
   - release-version
-  - release-master
+  - release-latest
   - docker-linux-amd64-release
   - docker-linux-arm64-release
   - docker-manifest

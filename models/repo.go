@@ -1520,6 +1520,18 @@ func DeleteRepository(doer *User, uid, repoID int64) error {
 		return err
 	}
 
+	// Dependencies for issues in this repository
+	if _, err = sess.In("issue_id", deleteCond).
+		Delete(&IssueDependency{}); err != nil {
+		return err
+	}
+
+	// Delete dependencies for issues in other repositories
+	if _, err = sess.In("dependency_id", deleteCond).
+		Delete(&IssueDependency{}); err != nil {
+		return err
+	}
+
 	if _, err = sess.In("issue_id", deleteCond).
 		Delete(&IssueUser{}); err != nil {
 		return err
@@ -1619,6 +1631,7 @@ func DeleteRepository(doer *User, uid, repoID int64) error {
 	}
 
 	if err = sess.Commit(); err != nil {
+		sess.Close()
 		if len(deployKeys) > 0 {
 			// We need to rewrite the public keys because the commit failed
 			if err2 := RewriteAllPublicKeys(); err2 != nil {
